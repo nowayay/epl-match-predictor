@@ -20,6 +20,7 @@ ELO_HOME_ADV = 70.0
 # Each summer ratings move a third of the way back to 1500: squads change,
 # so last season's strength is only partly informative.
 ELO_SEASON_REGRESSION = 1 / 3
+N_RELEGATED = 3  # the Premier League relegates (and promotes) three teams each year
 
 FORM_WINDOW = 5
 REST_DAYS_CAP = 14  # longer breaks (summer, international) count as "fully rested"
@@ -47,27 +48,37 @@ def elo_update(elo_home: float, elo_away: float, result: str, k: float = ELO_K,
     return elo_home + change, elo_away - change
 
 
+def relegated_teams(season_games: pd.DataFrame, n: int = N_RELEGATED) -> list[str]:
+    """The bottom `n` teams of a finished season (points, then goal difference, then goals for)."""
+    rows = _team_rows(season_games)
+    table = rows.groupby("team")[["points", "gd", "gf"]].sum()
+    return list(table.sort_values(["points", "gd", "gf"], kind="mergesort").index[:n])
+
+
 def add_elo(matches: pd.DataFrame) -> pd.DataFrame:
     """Add pre-match elo_home, elo_away and elo_diff (home minus away) columns.
 
     Rows without a result (upcoming fixtures) get ratings but do not update them.
     """
     ratings: dict[str, float] = {}
-    previous_teams: set[str] = set()
+    previous_games: pd.DataFrame | None = None
     elo_home, elo_away = np.empty(len(matches)), np.empty(len(matches))
 
     for season, games in matches.groupby("Season", sort=False):
         teams = set(games["HomeTeam"]) | set(games["AwayTeam"])
-        if previous_teams:
+        if previous_games is not None:
             ratings = {t: ELO_START + (1 - ELO_SEASON_REGRESSION) * (r - ELO_START) for t, r in ratings.items()}
             # Promoted teams take over the average rating of the teams they replace,
             # which starts them low and keeps the league average at 1500.
-            relegated, promoted = previous_teams - teams, teams - previous_teams
+            # Relegated teams come from last season's table, not from this season's
+            # team list: on opening day that list is incomplete (only the teams
+            # playing that day), which would wrongly mark teams as relegated.
+            relegated = [t for t in relegated_teams(previous_games) if t not in teams]
             promoted_rating = np.mean([ratings.pop(t) for t in relegated]) if relegated else ELO_START
-            ratings.update({t: promoted_rating for t in promoted})
+            ratings.update({t: promoted_rating for t in teams if t not in ratings})
         else:
             ratings = {t: ELO_START for t in teams}
-        previous_teams = teams
+        previous_games = games
 
         for pos, (home, away, result) in zip(
             matches.index.get_indexer(games.index),

@@ -12,6 +12,7 @@ from src.features import (
     build_features,
     compute_priors,
     elo_update,
+    relegated_teams,
 )
 from src.predict import fixture_features
 
@@ -136,3 +137,19 @@ def test_fixture_features_match_the_training_pipeline(matches):
     from_history = fixture_features(fixtures, matches)
     full = build_features(matches).loc[played.index]
     np.testing.assert_allclose(from_history[FEATURES].to_numpy(dtype=float), full[FEATURES].to_numpy(dtype=float))
+
+
+@pytest.mark.parametrize("season", ["2025-26", "2026-27"])
+def test_opening_days_match_the_training_pipeline(matches, season):
+    """Predicting the first matchdays of a season (few teams in the data so far) must
+    give the same features as training, including the Elo of promoted teams."""
+    first_days = sorted(matches.loc[matches["Season"] == season, "Date"].unique())[:3]
+    played = matches[matches["Date"].isin(first_days)]
+    history = matches[matches["Date"] < first_days[0]]
+    from_history = fixture_features(played[["Date", "HomeTeam", "AwayTeam"]], history)
+    full = build_features(matches).loc[played.index]
+    np.testing.assert_allclose(from_history[FEATURES].to_numpy(dtype=float), full[FEATURES].to_numpy(dtype=float))
+
+
+def test_relegated_teams_are_the_bottom_three(matches):
+    assert set(relegated_teams(matches[matches["Season"] == "2024-25"])) == {"Southampton", "Ipswich", "Leicester"}

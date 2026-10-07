@@ -28,7 +28,7 @@ Test season **2025-26** (380 matches, never used for training or tuning). Models
 
 *Log loss and Brier score judge the full probability distribution and are the main metrics; accuracy only checks the single most likely outcome. The last column is a paired bootstrap interval (1,000 resamples) for model log loss minus bookmaker log loss: an interval that contains 0 means the gap is within noise.*
 
-Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was used to pick the app's default model:
+Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was used to pick the app's default model. It is also the last of the three tuning folds, so it is not fully held out; only the test season is:
 
 | Model | Log loss | Accuracy |
 |---|---|---|
@@ -55,7 +55,7 @@ Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was 
 **Data.** [football-data.co.uk](https://www.football-data.co.uk/) CSVs, one per season, 2017-18 to 2025-26, plus the first 50 matches of 2026-27. `src/data.py` parses mixed date formats (`dayfirst=True, format="mixed"`), maps alternative team spellings to one canonical name, drops empty rows, validates that results match scores and that there are no duplicates, and sorts chronologically. Every completed season has 380 matches, 20 teams and no missing odds.
 
 **Features** (`src/features.py`, 27 in total). Every feature uses only matches before kickoff:
-- **Elo**: start 1500, K = 20, home advantage = 70 points. Updates are zero-sum. Each summer, ratings regress one third of the way back to 1500. Promoted teams take over the average rating of the teams relegated that summer, which starts them below average and keeps the league mean at exactly 1500 (tested). Outputs `elo_home`, `elo_away`, `elo_diff`, all pre-match.
+- **Elo**: start 1500, K = 20, home advantage = 70 points. Updates are zero-sum. Each summer, ratings regress one third of the way back to 1500. Promoted teams take over the average rating of the teams relegated that summer (the bottom three of last season's table), which starts them below average and keeps the league mean at exactly 1500 (tested). Outputs `elo_home`, `elo_away`, `elo_diff`, all pre-match.
 - **Rolling last-5 form** for each team (points, goals for/against, goal difference, shots, shots on target), computed with `.shift(1)` so a match never sees its own result.
 - **Venue-specific form**: the home team's last 5 *home* games and the away team's last 5 *away* games.
 - **Rest days** (capped at 14) and **season-to-date points per game**.
@@ -109,11 +109,11 @@ python -m src.evaluate   # test-season results table, figures, SHAP -> reports/
 python -m src.predict    # upcoming EPL fixtures (if listed) vs bookmaker
 python -m src.predict --home Arsenal --away Chelsea   # any custom pairing
 
-pytest                   # 35 tests: leakage, zero-sum Elo, split, probabilities, cleaning
+pytest                   # 38 tests: leakage, zero-sum Elo, split, probabilities, cleaning
 streamlit run app/streamlit_app.py
 ```
 
-The app needs only committed files (`data/processed/`, `models/`, `reports/`), so it runs straight after `pip install`. The notebooks ([01_eda](notebooks/01_eda.ipynb), [02_model_experiments](notebooks/02_model_experiments.ipynb)) are saved with outputs; re-running them needs Jupyter (`pip install notebook`). All random seeds are fixed (`SEED = 42`), and re-running the pipeline reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms).
+The app needs only committed files (`data/processed/`, `models/`, `reports/`), so it runs straight after `pip install`. The notebooks ([01_eda](notebooks/01_eda.ipynb), [02_model_experiments](notebooks/02_model_experiments.ipynb)) are saved with outputs; re-running them needs Jupyter (`pip install notebook`). All random seeds are fixed (`SEED = 42`), and re-running the pipeline reproduces the same numbers to within rounding. LogReg results are exact; XGBoost can differ slightly across platforms (a Linux re-run moved test log loss by 0.0002 and validation accuracy by 0.5 points).
 
 **Deploying:** see [DEPLOY.md](DEPLOY.md) for Streamlit Community Cloud steps.
 

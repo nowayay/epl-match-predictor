@@ -4,7 +4,7 @@
 **Test season:** 2025-26 (380 matches, held out from all training and tuning)
 **Data:** football-data.co.uk, 2017-18 to 2025-26 plus the first 50 matches of 2026-27 (data refreshed 7 Oct 2026)
 
-All figures in this report come from running the code in this repository (`python -m src.evaluate`, `python -m src.train` and the two notebooks). Re-running the pipeline from a fresh clone reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms) (`SEED = 42`).
+All figures in this report come from running the code in this repository (`python -m src.evaluate`, `python -m src.train` and the two notebooks). Re-running the pipeline from a fresh clone reproduces the same numbers to within rounding (`SEED = 42`). LogReg results are exact; XGBoost can differ slightly across platforms (a Linux re-run moved test log loss by 0.0002 and validation accuracy by 0.5 points).
 
 ---
 
@@ -54,7 +54,7 @@ Cleaning (`src/data.py`) parses mixed `dd/mm/yy` and `dd/mm/yyyy` dates, maps al
 
 | Group | Features | Notes |
 |---|---|---|
-| Elo (3) | `elo_home`, `elo_away`, `elo_diff` | Start 1500, K = 20, home advantage 70. Zero-sum updates. Ratings regress ⅓ toward 1500 each summer. Promoted teams inherit the relegated teams' average rating. |
+| Elo (3) | `elo_home`, `elo_away`, `elo_diff` | Start 1500, K = 20, home advantage 70. Zero-sum updates. Ratings regress ⅓ toward 1500 each summer. Promoted teams inherit the average rating of last season's bottom three. |
 | Last-5 form (12) | points, goals for, goals against, goal difference, shots, shots on target, for each team | `.shift(1)` so a match never sees its own result |
 | Venue form (8) | points, goals for/against, goal difference, from the home team's last 5 home games and the away team's last 5 away games | |
 | Other (4) | rest days (capped at 14), season-to-date points per game | |
@@ -120,7 +120,7 @@ Average predicted probabilities match the actual outcome mix closely. For exampl
 
 ### 4.2 Validation season 2024-25
 
-Models trained on 2019-20 to 2023-24 only.
+Models trained on 2019-20 to 2023-24 only. Note that 2024-25 is also the last of the three expanding-window tuning folds (section 3.2), so these scores are mildly optimistic and the season is not fully held out. Only the 2025-26 test season is.
 
 | Model | Log loss | Accuracy |
 |---|---|---|
@@ -188,11 +188,11 @@ Adding form features made the score slightly worse. Elo already summarises past 
 | Time split has no overlap | Last train date < first validation date < first test date | Pass |
 | Probabilities are valid | Every saved model's H/D/A probabilities sum to 1 | Pass |
 | Bookmaker normalisation | Implied probabilities sum to 1 after removing the margin | Pass |
-| Fixture predictions use history before kickoff only | `src/predict.py` reproduces the training features exactly for past fixtures | Pass |
+| Fixture predictions use history before kickoff only | `src/predict.py` reproduces the training features exactly for past fixtures, including opening-day fixtures when promoted teams' ratings are set (2025-26 and 2026-27) | Pass |
 | Data cleaning | Mixed date formats, name normalisation, sorting, validation errors | Pass |
-| Reproducibility | Fresh clone → download → train → evaluate reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms) | Pass |
+| Reproducibility | Fresh clone → download → train → evaluate reproduces the same numbers to within rounding (LogReg exact; XGBoost can differ in the last decimals across platforms) | Pass |
 
-Test suite: **35 passed**.
+Test suite: **38 passed**.
 
 ---
 
