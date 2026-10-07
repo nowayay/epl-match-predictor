@@ -1,0 +1,98 @@
+{
+  "train_seasons": [
+    "2019-20",
+    "2020-21",
+    "2021-22",
+    "2022-23",
+    "2023-24",
+    "2024-25"
+  ],
+  "test_season": "2025-26",
+  "best_params": {
+    "Baseline": {},
+    "LogReg (Elo)": {
+      "C": 1.0
+    },
+    "LogReg (all)": {
+      "C": 0.01
+    },
+    "XGBoost": {
+      "max_depth": 1,
+      "learning_rate": 0.02,
+      "n_estimators": 400
+    }
+  },
+  "best_model_by_validation": "LogReg (Elo)",
+  "model_files": {
+    "Baseline": "baseline.joblib",
+    "LogReg (Elo)": "logreg_elo.joblib",
+    "LogReg (all)": "logreg_all.joblib",
+    "XGBoost": "xgboost.joblib"
+  },
+  "model_features": {
+    "Baseline": [
+      "elo_diff"
+    ],
+    "LogReg (Elo)": [
+      "elo_diff"
+    ],
+    "LogReg (all)": [
+      "elo_home",
+      "elo_away",
+      "elo_diff",
+      "home_form_points",
+      "home_form_gf",
+      "home_form_ga",
+      "home_form_gd",
+      "home_form_shots",
+      "home_form_sot",
+      "away_form_points",
+      "away_form_gf",
+      "away_form_ga",
+      "away_form_gd",
+      "away_form_shots",
+      "away_form_sot",
+      "home_venue_points",
+      "home_venue_gf",
+      "home_venue_ga",
+      "home_venue_gd",
+      "away_venue_points",
+      "away_venue_gf",
+      "away_venue_ga",
+      "away_venue_gd",
+      "home_rest_days",
+      "away_rest_days",
+      "home_season_ppg",
+      "away_season_ppg"
+    ],
+    "XGBoost": [
+      "elo_home",
+      "elo_away",
+      "elo_diff",
+      "home_form_points",
+      "home_form_gf",
+      "home_form_ga",
+      "home_form_gd",
+      "home_form_shots",
+      "home_form_sot",
+      "away_form_points",
+      "away_form_gf",
+      "away_form_ga",
+      "away_form_gd",
+      "away_form_shots",
+      "away_form_sot",
+      "home_venue_points",
+      "home_venue_gf",
+      "home_venue_ga",
+      "home_venue_gd",
+      "away_venue_points",
+      "away_venue_gf",
+      "away_venue_ga",
+      "away_venue_gd",
+      "home_rest_days",
+      "away_rest_days",
+      "home_season_ppg",
+      "away_season_ppg"
+    ]
+  }
+}
