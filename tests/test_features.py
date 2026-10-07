@@ -13,6 +13,7 @@ from src.features import (
     compute_priors,
     elo_update,
 )
+from src.predict import fixture_features
 
 RESULT_COLS = ["FTHG", "FTAG", "FTR", "HS", "AS", "HST", "AST", "HC", "AC", "HF", "AF", "HY", "AY", "HR", "AR"]
 
@@ -126,3 +127,12 @@ def test_unplayed_fixture_gets_features_without_target(matches):
 def test_unsorted_input_is_rejected(matches):
     with pytest.raises(ValueError, match="sorted"):
         build_features(matches.iloc[::-1])
+
+
+def test_fixture_features_match_the_training_pipeline(matches):
+    """Predicting past fixtures from earlier history only reproduces the training features exactly."""
+    played = matches[matches["Season"] == "2025-26"].tail(20)
+    fixtures = played[["Date", "HomeTeam", "AwayTeam"]]
+    from_history = fixture_features(fixtures, matches)
+    full = build_features(matches).loc[played.index]
+    np.testing.assert_allclose(from_history[FEATURES].to_numpy(dtype=float), full[FEATURES].to_numpy(dtype=float))
