@@ -6,10 +6,6 @@ and the figures in reports/figures/.
 
 from __future__ import annotations
 
-import matplotlib
-
-matplotlib.use("Agg")  # render to files; no display needed
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
