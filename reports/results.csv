@@ -1,0 +1,6 @@
+model,log_loss,brier,accuracy,draws_predicted,log_loss_vs_book_ci_low,log_loss_vs_book_ci_high
+Baseline,1.0851,0.6565,0.4263,0,0.0329,0.1008
+LogReg (Elo),1.0354,0.6251,0.4895,0,-0.0026,0.0382
+LogReg (all),1.0307,0.6217,0.4737,0,-0.0063,0.0313
+XGBoost,1.0398,0.6271,0.4842,0,0.0007,0.0429
+Bookmaker,1.0185,0.6115,0.4895,0,,
