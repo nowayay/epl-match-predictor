@@ -2,8 +2,15 @@
 
 **Predicts Home / Draw / Away probabilities for Premier League matches from Elo ratings and recent form, and benchmarks them honestly against bookmaker odds on a season the models have never seen.**
 
-![Demo](reports/figures/demo.gif)
-<!-- Placeholder: record the Streamlit app (e.g. with Kap or ScreenToGif) and save it as reports/figures/demo.gif -->
+**Live demo:** <!-- add Streamlit Cloud URL after deploying -->
+
+<!-- Demo GIF: record the Streamlit app (e.g. with Kap on macOS or ScreenToGif on Windows), save it as
+     reports/figures/demo.gif, then add a line here: ![Demo](reports/figures/demo.gif) -->
+
+**TL;DR**
+- Elo + recent form gets within ~0.01-0.02 log loss of Bet365's margin-free probabilities on a held-out season (2025-26, 380 matches). The two logistic regressions cannot be statistically distinguished from the bookmaker; XGBoost is likely worse.
+- Simple beat complex: a one-feature Elo model was the best on validation, and more features did not help.
+- No model, including the bookmaker, ever favours a draw. Leakage is ruled out by automated tests.
 
 ## Results
 
@@ -36,12 +43,12 @@ Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was 
 
 ## Key findings
 
-- **Nobody beat the bookmaker.** The best model on the test season (LogReg, all features) trails Bet365 by 0.012 log loss. For both logistic regressions the 95% interval of the gap includes zero, so on 380 matches they cannot be told apart from the bookmaker statistically. XGBoost is measurably worse (its interval is entirely above zero).
+- **Nobody beat the bookmaker.** The best model on the test season (LogReg, all features) trails Bet365 by 0.012 log loss. For both logistic regressions the 95% interval of the gap includes zero, so on 380 matches they cannot be told apart from the bookmaker statistically. XGBoost is likely worse (its interval only just excludes zero).
 - **XGBoost lost to logistic regression** on both validation and test. Its tuned settings collapsed to depth-1 trees, i.e. an almost linear model. With ~2,000 training matches there is not enough signal for non-linear structure to pay off.
-- **Elo does almost all the work.** A one-feature logistic regression on Elo difference was the best model on validation. Adding form features made cross-validated log loss slightly *worse* (0.9639 → 0.9660–0.9693, see `notebooks/02_model_experiments.ipynb`). On test, the all-features model edged ahead by 0.005, well within noise. The ranking flipping between validation and test is itself a lesson about small samples.
-- **Test accuracy (47–49%) is below the typical 52–55%, because 2025-26 was the least predictable season in the data.** Even the bookmaker only reached 48.9%, against 51.8–59.7% in every other season since 2017-18 (`notebooks/01_eda.ipynb`). It also had the most draws (27.4%) of any completed season. On the more typical 2024-25 validation season the Elo model reached 54.5% accuracy, 0.0065 log loss behind the bookmaker.
+- **Elo does almost all the work.** A one-feature logistic regression on Elo difference was the best model on validation. Adding form features made cross-validated log loss slightly *worse* (0.9639 → 0.9660–0.9693, see [02_model_experiments.ipynb](notebooks/02_model_experiments.ipynb)). On test, the all-features model edged ahead by 0.005, well within noise. The ranking flipping between validation and test is itself a lesson about small samples.
+- **Test accuracy (47–49%) is below the typical 52–55%, because 2025-26 was the least predictable season in the data.** Even the bookmaker only reached 48.9%, against 51.8–59.7% in every other season since 2017-18 ([01_eda.ipynb](notebooks/01_eda.ipynb)). It also had the most draws (27.4%) of any completed season. On the more typical 2024-25 validation season the Elo model reached 54.5% accuracy, 0.0065 log loss behind the bookmaker.
 - **Draws are invisible to every model, including the bookmaker.** No model, and not the bookmaker, ever makes a draw the most likely outcome (the highest draw probability Bet365 offered in nine seasons was 33.9%), yet 27% of test matches were draws.
-- **Home advantage depends on crowds.** In 2020-21, played behind closed doors, away wins (40.3%) outnumbered home wins (37.9%) for the only time in the data.
+- **Home advantage looks crowd-dependent.** In 2020-21, played behind closed doors, away wins (40.3%) outnumbered home wins (37.9%) for the only time in the data (one season, so only suggestive).
 
 ## Approach
 
@@ -67,13 +74,13 @@ Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was 
 
 - **More features ≠ better.** I expected rolling form, shots and venue splits to help. They did not: Elo already compresses past results, and 5-match averages are mostly noise.
 - **XGBoost was the wrong tool for this data size.** Its first tuning grid picked the smallest settings available, so I widened the grid (using validation only), and it chose depth-1 stumps. Gradient boosting shines with many rows and interactions; ~380 matches per season offer neither.
-- **One season is a small test set.** The confidence intervals on the gap to the bookmaker are about ±0.02 log loss, larger than the differences between my models. The validation and test rankings disagreed, which they would not do if the differences were real.
+- **One season is a small test set.** The confidence intervals on the gap to the bookmaker are about ±0.02 log loss, larger than the differences between my models. The validation and test rankings disagreed; the flip is what you would expect when differences between models are smaller than the noise.
 - **Accuracy is a misleading headline.** The test season looked "bad" by accuracy, but the bookmaker scored the same 48.9%. Comparing against a strong benchmark on the same matches is what makes a result interpretable.
 - **Leakage hides in small places.** Same-day matches, season boundaries and promoted teams all needed care. Writing the "scramble the future" test first made these easy to check.
 
 ## Limitations
 
-- No team news: injuries, suspensions, lineups, rotation and manager changes are invisible to the model. The bookmaker sees them, which is a large part of its edge.
+- No team news: injuries, suspensions, lineups, rotation and manager changes are invisible to the model. The bookmaker sees them, which plausibly explains much of its edge.
 - Draws are hard to predict: no model ever favours one.
 - Only Premier League matches: rest days ignore cup and European fixtures, and promoted teams have no Championship history.
 - Bet365's pre-match odds from football-data are the benchmark, not closing odds from a sharp exchange, so the true market is probably a little stronger still.
@@ -106,9 +113,15 @@ pytest                   # 35 tests: leakage, zero-sum Elo, split, probabilities
 streamlit run app/streamlit_app.py
 ```
 
-The app needs only committed files (`data/processed/`, `models/`, `reports/`), so it runs straight after `pip install`. The notebooks need Jupyter (`pip install notebook`). All random seeds are fixed (`SEED = 42`), and re-running the pipeline reproduces the same numbers.
+The app needs only committed files (`data/processed/`, `models/`, `reports/`), so it runs straight after `pip install`. The notebooks ([01_eda](notebooks/01_eda.ipynb), [02_model_experiments](notebooks/02_model_experiments.ipynb)) are saved with outputs; re-running them needs Jupyter (`pip install notebook`). All random seeds are fixed (`SEED = 42`), and re-running the pipeline reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms).
+
+**Deploying:** see [DEPLOY.md](DEPLOY.md) for Streamlit Community Cloud steps.
 
 **macOS troubleshooting:** if `import xgboost` fails with `libomp.dylib could not be loaded`, run `brew install libomp`.
+
+## License
+
+[MIT](LICENSE)
 
 ## Project structure
 

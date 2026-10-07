@@ -4,14 +4,14 @@
 **Test season:** 2025-26 (380 matches, held out from all training and tuning)
 **Data:** football-data.co.uk, 2017-18 to 2025-26 plus the first 50 matches of 2026-27 (data refreshed 7 Oct 2026)
 
-All figures in this report come from running the code in this repository (`python -m src.evaluate`, `python -m src.train` and the two notebooks). Re-running the pipeline from a fresh clone reproduces them exactly (`SEED = 42`).
+All figures in this report come from running the code in this repository (`python -m src.evaluate`, `python -m src.train` and the two notebooks). Re-running the pipeline from a fresh clone reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms) (`SEED = 42`).
 
 ---
 
 ## 1. Summary
 
 - **The bookmaker remains the best forecaster.** On the 2025-26 test season Bet365 scored a log loss of **1.0185**. The best model, a logistic regression on all features, scored **1.0307**, a gap of 0.012.
-- **The two logistic regressions are statistically indistinguishable from the bookmaker** on 380 matches: the 95% bootstrap interval of their gap includes zero. **XGBoost is measurably worse** than the bookmaker.
+- **The two logistic regressions are statistically indistinguishable from the bookmaker** on 380 matches: the 95% bootstrap interval of their gap includes zero. **XGBoost is likely worse** than the bookmaker (its interval only just excludes zero).
 - **Simple beat complex.** XGBoost lost to logistic regression on both validation and test, and a one-feature model (Elo difference) was the best model on validation.
 - **Accuracy of 47–49% reflects an unusually unpredictable season, not a broken model.** Bet365 also managed only 48.9% in 2025-26, against 51.8–59.7% in every other season since 2017-18. On the 2024-25 validation season, the Elo model reached **54.5%**, compared with the bookmaker's 53.9%.
 - **No forecaster ever predicts a draw**, including the bookmaker, although 27.4% of test matches were draws.
@@ -32,7 +32,7 @@ All figures in this report come from running the code in this repository (`pytho
 
 Cleaning (`src/data.py`) parses mixed `dd/mm/yy` and `dd/mm/yyyy` dates, maps alternative team spellings to one name, drops empty rows, and validates that each result matches the score, that no team plays itself and that there are no duplicates. Matches are sorted chronologically before any feature is built.
 
-**Outcome rates by season.** Home wins are the most common result, but home advantage varies. In 2020-21, played behind closed doors, away wins outnumbered home wins.
+**Outcome rates by season.** Home wins are the most common result, but home advantage varies. Home advantage looks crowd-dependent: in 2020-21, played behind closed doors, away wins outnumbered home wins (one season, so only suggestive).
 
 | Season | Home win | Draw | Away win |
 |---|---|---|---|
@@ -130,7 +130,7 @@ Models trained on 2019-20 to 2023-24 only.
 | XGBoost | 0.9898 | 54.2% |
 | Bookmaker (reference) | 0.9708 | 53.9% |
 
-LogReg (Elo) was the best model on validation, so it is the default model in the app. On test, LogReg (all) edged ahead by 0.005 log loss. That difference is well within noise, and the swap in ranking shows how little separates these models.
+LogReg (Elo) was the best model on validation, so it is the default model in the app. On test, LogReg (all) edged ahead by 0.005 log loss. That difference is well within noise; the flip is what you would expect when differences between models are smaller than the noise.
 
 ### 4.3 Context: how predictable was each season?
 
@@ -190,7 +190,7 @@ Adding form features made the score slightly worse. Elo already summarises past 
 | Bookmaker normalisation | Implied probabilities sum to 1 after removing the margin | Pass |
 | Fixture predictions use history before kickoff only | `src/predict.py` reproduces the training features exactly for past fixtures | Pass |
 | Data cleaning | Mixed date formats, name normalisation, sorting, validation errors | Pass |
-| Reproducibility | Fresh clone → download → train → evaluate gives identical results files | Pass |
+| Reproducibility | Fresh clone → download → train → evaluate reproduces the same numbers to within rounding (XGBoost can differ in the last decimals across platforms) | Pass |
 
 Test suite: **35 passed**.
 
@@ -198,7 +198,7 @@ Test suite: **35 passed**.
 
 ## 6. Limitations
 
-- **No team news.** Injuries, suspensions, lineups, rotation and manager changes are invisible to the models. The bookmaker sees them, which explains much of its edge.
+- **No team news.** Injuries, suspensions, lineups, rotation and manager changes are invisible to the models. The bookmaker sees them, which plausibly explains much of its edge.
 - **Draws.** No forecaster ever favours a draw, so roughly a quarter of matches can never be "correct" on accuracy.
 - **Premier League only.** Rest days ignore cup and European games, and promoted teams have no Championship history.
 - **Benchmark.** The benchmark is Bet365's pre-match odds, not closing odds from a sharp exchange, so the true market is likely slightly stronger.
@@ -215,4 +215,4 @@ Test suite: **35 passed**.
 
 ## 8. Conclusion
 
-A transparent, leak-free pipeline built mostly on Elo ratings gets within about 0.01 log loss of a major bookmaker. On a single test season that gap cannot be distinguished from zero for the logistic regression models. More features and a more flexible model (XGBoost) did not improve on the simple approach. The remaining gap is most plausibly information the models never see: team news and lineups.
+A transparent, leak-free pipeline built mostly on Elo ratings gets within about 0.01-0.02 log loss of a major bookmaker. On a single test season that gap cannot be distinguished from zero for the logistic regression models. More features and a more flexible model (XGBoost) did not improve on the simple approach. The remaining gap is most plausibly information the models never see: team news and lineups.

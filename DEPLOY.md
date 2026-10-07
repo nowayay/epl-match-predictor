@@ -15,6 +15,7 @@ The app reads only committed files (`data/processed/`, `models/`, `reports/`), s
    - **Main file path**: `app/streamlit_app.py`
 5. Open **Advanced settings** and set **Python version** to **3.12** or newer (the pinned packages in `requirements.txt` need it). No secrets are required.
 6. Click **Deploy**. Streamlit installs `requirements.txt` from the repo root and starts the app. The first build takes a few minutes.
+7. Copy the app URL (e.g. `https://<your-app>.streamlit.app`) and paste it into the **Live demo** line at the top of `README.md`, replacing the placeholder comment. Commit and push.
 
 ## Updating the deployed app
 
