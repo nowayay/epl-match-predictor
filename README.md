@@ -17,6 +17,8 @@ Test season **2025-26** (380 matches, never used for training or tuning). Models
 | XGBoost (all 27 features) | 1.0398 | 0.6271 | 48.4% | 0 | [+0.001, +0.043] |
 | **Bookmaker** (Bet365, margin removed) | **1.0185** | **0.6115** | **48.9%** | 0 | reference |
 
+📄 Full write-up: [reports/REPORT.md](reports/REPORT.md)
+
 *Log loss and Brier score judge the full probability distribution and are the main metrics; accuracy only checks the single most likely outcome. The last column is a paired bootstrap interval (1,000 resamples) for model log loss minus bookmaker log loss: an interval that contains 0 means the gap is within noise.*
 
 Validation season **2024-25** (models trained on 2019-20 to 2023-24), which was used to pick the app's default model:
