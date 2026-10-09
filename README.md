@@ -2,10 +2,9 @@
 
 **Predicts Home / Draw / Away probabilities for Premier League matches from Elo ratings and recent form, and benchmarks them honestly against bookmaker odds on a season the models have never seen.**
 
-**Live demo:** <!-- add Streamlit Cloud URL after deploying -->
+**Live demo:** https://nowayay-epl-predictor.streamlit.app
 
-<!-- Demo GIF: record the Streamlit app (e.g. with Kap on macOS or ScreenToGif on Windows), save it as
-     reports/figures/demo.gif, then add a line here: ![Demo](reports/figures/demo.gif) -->
+![Demo](reports/figures/demo.gif)
 
 **TL;DR**
 - Elo + recent form gets within ~0.01-0.02 log loss of Bet365's margin-free probabilities on a held-out season (2025-26, 380 matches). The two logistic regressions cannot be statistically distinguished from the bookmaker; XGBoost is likely worse.
